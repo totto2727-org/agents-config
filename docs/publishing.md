@@ -1,4 +1,4 @@
-# Publishing agents-config
+# Publishing llm-profiles
 
 `CI` validates the crate and its packaged source on pull requests and pushes to `main`.
 `Publish crate` runs on every push to `main`, including merged pull requests.
@@ -16,7 +16,7 @@ Currently it targets crates.io only, not custom Cargo registries.
 
 - Protect `main` and require the PR CI check before merging.
 - Configure the `crates-io` GitHub environment and store `CARGO_REGISTRY_TOKEN` there.
-- Use an expiring token scoped to `agents-config`, with `publish-new` for initial publication and `publish-update` for subsequent versions.
+- Use an expiring token scoped to `llm-profiles`, with `publish-new` for initial publication and `publish-update` for subsequent versions.
 - Configure environment reviewers if approval before upload is desired.
 
 The workflow does not create environment protections or credentials automatically.

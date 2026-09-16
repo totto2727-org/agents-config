@@ -1,6 +1,6 @@
-# agents-config
+# llm-profiles
 
-`agents-config` lets independent applications share named OpenAI-compatible providers and credentials, then convert validated settings into their own library types.
+`llm-profiles` lets independent applications share named OpenAI-compatible providers and credentials, then convert validated settings into their own library types.
 It has no dependency on GlossShift or GPUI, and Rig support is optional.
 
 ## Usage
@@ -8,7 +8,7 @@ It has no dependency on GlossShift or GPUI, and Rig support is optional.
 Use the same configured provider for an assistant in another Rust application:
 
 ```rust
-use agents_config::{AgentConfigPaths, load_from_paths};
+use llm_profiles::{AgentConfigPaths, load_from_paths};
 use rig::completion::Prompt;
 
 async fn summarize() -> Result<String, Box<dyn std::error::Error>> {
@@ -50,7 +50,7 @@ From an application under `app/<name>/`, add:
 
 ```toml
 [dependencies]
-agents-config = { path = "../../package/agents-config", features = ["rig"] }
+llm-profiles = { path = "../../package/llm-profiles", features = ["rig"] }
 rig = "0.41"
 ```
 
@@ -109,7 +109,7 @@ Other placeholders, including `${HOME}`, remain literal header text.
 
 ## API
 
-See the [API reference on docs.rs](https://docs.rs/agents-config/latest/agents_config/) after the first crate publication.
+See the [API reference on docs.rs](https://docs.rs/llm-profiles/latest/llm_profiles/) after the first crate publication.
 
 ## Development
 

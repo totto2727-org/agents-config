@@ -1,11 +1,11 @@
 [package]
-name = "agents-config"
+name = "llm-profiles"
 version = "0.1.0"
 edition = "2024"
 description = "Shared, validated OpenAI-compatible agent configuration"
 readme = "README.md"
-documentation = "https://docs.rs/agents-config/latest/agents_config/"
-repository = "https://github.com/totto2727-org/agents-config"
+documentation = "https://docs.rs/llm-profiles/latest/llm_profiles/"
+repository = "https://github.com/totto2727-org/llm-profiles"
 publish = ["crates-io"]
 include = ["src/**", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md", "docs/**", "LICENSE"]
 license = "MIT"

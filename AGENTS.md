@@ -1,9 +1,9 @@
-# agents-config
+# llm-profiles
 
 ## Repository structure
 
 `src/` owns shared configuration parsing, validated provider resolution, credential-file handling, and optional Rig conversion.
-This is an independent Git repository under `package/agents-config` in the virtual monorepo, not a GlossShift module.
+This is an independent Git repository under `package/llm-profiles` in the virtual monorepo, not a GlossShift module.
 The development scaffold is adapted from `totto2727-org/template-rust-simple` at commit `08ffe1d2d6a27e8d0b4c25f98e5a89a96d8ec1c1`.
 `rust-toolchain.toml`, `.envrc`, `flake.nix`, `flake.lock`, `Justfile`, and `.github/workflows/` own development and release automation.
 As this is a library, the template's CLI entry point, CLI tests, `package.nix`, installable Nix package/overlay outputs, and FlakeHub publishing workflow are not used.

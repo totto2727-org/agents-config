@@ -250,7 +250,7 @@ impl ResolvedProvider {
 /// No Rig feature is required. Use [`ResolvedProvider::adapt`] to run the conversion.
 ///
 /// ```
-/// use agents_config::{ProviderAdapter, ResolvedProvider};
+/// use llm_profiles::{ProviderAdapter, ResolvedProvider};
 /// use std::convert::Infallible;
 ///
 /// struct ModelSelection;

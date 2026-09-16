@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: publish-agents-config
+  group: publish-llm-profiles
   cancel-in-progress: false
 
 jobs:
