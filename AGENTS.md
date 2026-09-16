@@ -17,7 +17,7 @@ Review `.envrc` before explicitly allowing direnv.
 
 - `just` lists available tasks without running checks or changing files.
 - `just fix` applies formatting and supported Clippy fixes.
-- `just check` checks formatting, strict Clippy with and without optional features, and GitHub Actions with actionlint/ShellCheck.
+- `just check` checks formatting and strict Clippy with and without optional features.
 - `just build` builds with all features enabled.
 - `just test` runs tests with and without Rig.
 - `just ci` runs the complete local validation gate.

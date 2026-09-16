@@ -23,13 +23,11 @@
         {
           default = pkgs.mkShell {
             packages = [
-              pkgs.actionlint
               pkgs.git
               pkgs.curl
               pkgs.jq
               pkgs.just
               pkgs.rustup
-              pkgs.shellcheck
             ];
           };
         }

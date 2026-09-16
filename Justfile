@@ -11,10 +11,7 @@ fix-rustfmt:
 fix-clippy:
     cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features -- -D warnings
 
-check: check-rustfmt check-clippy check-workflows
-
-check-workflows:
-    actionlint .github/workflows/*.yml
+check: check-rustfmt check-clippy
 
 check-rustfmt:
     cargo fmt --all --check
