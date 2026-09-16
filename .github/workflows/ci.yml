@@ -14,8 +14,13 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
       - name: Verify Rust crate
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           just ci
+          just package
+      - name: Evaluate supported Nix environments
+        run: nix flake check --all-systems --no-build

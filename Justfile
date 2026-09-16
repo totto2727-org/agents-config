@@ -11,21 +11,36 @@ fix-rustfmt:
 fix-clippy:
     cargo clippy --fix --allow-dirty --allow-staged --all-targets --all-features -- -D warnings
 
-check: check-rustfmt check-clippy
+check: check-rustfmt check-clippy check-workflows
+
+check-workflows:
+    actionlint .github/workflows/*.yml
 
 check-rustfmt:
     cargo fmt --all --check
 
 check-clippy:
-    cargo clippy --all-targets --all-features -- -D warnings
+    cargo clippy --locked --all-targets --all-features -- -D warnings
+    cargo clippy --locked --all-targets --no-default-features -- -D warnings
 
 build:
-    cargo build --all-features
+    cargo build --locked --all-features
 
 test:
-    cargo test --all-features
+    cargo test --locked --all-features
+    cargo test --locked --no-default-features
 
-run:
-    cargo run
+# Exercise the release guard through its CLI using temporary Git repositories.
+test-release:
+    python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
 
-ci: check build test
+# Validate both published feature configurations without uploading a crate.
+package:
+    cargo package --locked --no-default-features
+    cargo package --locked --all-features
+
+# Check registry publication without a token or any upload.
+publish-dry-run:
+    cargo publish --locked --registry crates-io --dry-run
+
+ci: check build test test-release

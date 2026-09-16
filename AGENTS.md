@@ -1,87 +1,55 @@
-# template-rust-simple initialization
+# agents-config
 
-## Template files
+## Repository structure
 
-| File | Meaning |
-| --- | --- |
-| `README.md` | Template entry point: asks an AI agent to follow this initialization guide. |
-| `AGENTS.md` | Template file map and initialization instructions. Replaced after initialization. |
-| `README_TEMPLATE.md` | End-user README skeleton to customize and promote to README.md. |
-| `AGENTS_TEMPLATE.md` | Copied-project development guidance to customize and promote to AGENTS.md. |
-| `src/`, `tests/` | Starter command and tests to replace with the new project. |
-| `Cargo.toml` | Crate identity, repository metadata, dependencies, and lint policy. |
-| `Cargo.lock` | Locked Rust dependencies and root package identity. |
-| `rust-toolchain.toml` | Rustup toolchain, components, and targets. |
-| `Justfile` | Standard development tasks for the copied project. |
-| `flake.nix`, `flake.lock` | Nix development environment, package/overlay outputs, and pinned inputs. |
-| `package.nix` | Nix CLI package definition and metadata. |
-| `.envrc` | Optional direnv entry point for the Nix shell. |
-| `.github/workflows/ci.yml` | Pre-merge Rust validation. |
-| `.github/workflows/flakehub-publish-rolling.yml.disabled` | Disabled public rolling FlakeHub publication workflow. |
-| `.gitignore` | Local outputs excluded from Git. |
-| `LICENSE` | License and copyright holder to review for the new project. |
+`src/` owns shared configuration parsing, validated provider resolution, credential-file handling, and optional Rig conversion.
+This is an independent Git repository under `package/agents-config` in the virtual monorepo, not a GlossShift module.
+The development scaffold is adapted from `totto2727-org/template-rust-simple` at commit `08ffe1d2d6a27e8d0b4c25f98e5a89a96d8ec1c1`.
+`rust-toolchain.toml`, `.envrc`, `flake.nix`, `flake.lock`, `Justfile`, and `.github/workflows/` own development and release automation.
+As this is a library, the template's CLI entry point, CLI tests, `package.nix`, installable Nix package/overlay outputs, and FlakeHub publishing workflow are not used.
 
-## Initialization
+## Development commands
 
-### 1. Establish the project
+Run commands from this repository root.
+Enter `nix develop` before Cargo or Just commands; for non-interactive validation use `nix develop --command just ci`.
+Rustup selects the stable toolchain and Clippy/rustfmt components from `rust-toolchain.toml`; Nix provides rustup and Just rather than a second Rust toolchain.
+Review `.envrc` before explicitly allowing direnv.
 
-Use the requested repository name, crate and command names, purpose, license, and publication targets.
-Resolve missing project-specific decisions with the user rather than inventing registry ownership or publishing credentials.
-Work from the copied repository root and enter `nix develop` before running Cargo or Just tasks.
-If using direnv, review `.envrc` before explicitly running `direnv allow`.
+- `just` lists available tasks without running checks or changing files.
+- `just fix` applies formatting and supported Clippy fixes.
+- `just check` checks formatting, strict Clippy with and without optional features, and GitHub Actions with actionlint/ShellCheck.
+- `just build` builds with all features enabled.
+- `just test` runs tests with and without Rig.
+- `just test-release` runs the release guard against real temporary Git repositories.
+- `just ci` runs the complete local validation gate.
+- `just package` verifies the packaged crate with and without Rig; run from a clean committed checkout.
+- `just publish-dry-run` checks registry publication without uploading or requiring a publishing token.
+- `nix flake check --all-systems --no-build` evaluates all supported development-shell outputs.
 
-### 2. Replace metadata and starter files
+## Architecture
 
-Replace `project` in `Cargo.toml`, `package.nix`, the package/overlay attributes in `flake.nix`, and the binary reference in `tests/cli.rs`.
-Replace `username/project`, version, description, keywords, repository URL, license, Nix metadata, and copyright holder with the copied project's values.
-Keep or adjust the Rust channel, components, and targets in `rust-toolchain.toml` and the minimum Rust version in `Cargo.toml` to match the project's requirements.
-Replace the starter source and tests with the actual project.
+Keep filesystem and environment discovery at the loading boundary.
+Only the explicit shared configuration path or the home-directory default selects providers; do not introduce implicit project-directory discovery.
+Keep provider settings independent of consumer UI and prompts.
+`ProviderAdapter` permits downstream library types, while the optional `rig` feature owns Rig-specific connection and agent construction.
+First-chunk and stream-idle timeout durations remain a neutral application streaming policy, not an implicit Rig timeout guarantee.
 
-Retain Nix package/overlay outputs for a distributable CLI.
-If the copied project is no longer a CLI and those outputs are removed, remove the corresponding README installation paths as well.
-Keep shared `totto2727-org/monorepo` action references on `@main`, matching the other simple templates.
-Do not create `CLAUDE.md`.
+## Package-specific rules
 
-### 3. Create the project's documentation
+- Never read real user credentials in tests; use explicit temporary paths.
+- Preserve existing configuration and credential content when initializing missing templates.
+- Keep credentials mode `0600` on Unix and avoid exposing secret values in `Debug`, error chains, or raw TOML diagnostics.
+- Validate URL, path, header, credential-reference, and timeout invariants before constructing resolved providers.
+- Keep both no-feature and Rig-feature builds usable without GlossShift or GPUI dependencies.
+- Use placeholder credentials in examples and test fixtures only.
+- Keep temporary experiments and progress logs out of commits.
 
-Customize `README_TEMPLATE.md` for the actual user-facing features, usage, prerequisites, supported installation methods, and complete public command surface.
-Keep Usage focused on the installed command and present supported acquisition methods as alternatives, stating that only one setup method is required.
-Document direct `nix run`, the applicable crates.io or Git `cargo install`, `nix profile install`, and declarative overlay-based `flake.nix` setup when supported.
-If the project introduces a library API, inspect its canonical registry documentation first and link a maintained API index when available.
-Customize `AGENTS_TEMPLATE.md` for the actual file layout, development commands, boundaries, and project-specific rules.
-Remove placeholders and unsupported setup methods, retaining the customized project documents' provenance footers.
-Keep template initialization instructions out of the copied project's final documents.
+## Publication
 
-Configure or delete the disabled publishing workflow using the instructions below before replacing this guide with the customized documents:
+Read [the publishing guide](./docs/publishing.md) before changing or running the crates.io workflow.
+Publishing is manual-only, requires an existing version-matching tag on main, and uses a token stored in the protected `crates-io` GitHub environment.
+Do not dispatch publishing, create releases, or install secrets merely to test CI.
+Keep the template's shared Nix action on `@main` in ordinary read-only CI; the privileged publish workflow uses directly reviewed SHA-pinned actions instead.
+Never treat a local dry run as proof of registry ownership or configured GitHub environment protection.
 
-```bash
-rm README.md AGENTS.md
-mv README_TEMPLATE.md README.md
-mv AGENTS_TEMPLATE.md AGENTS.md
-```
-
-### 4. Validate and hand off
-
-Update `Cargo.lock` after changing the package name, dependencies, or toolchain, and run `nix flake update` after Nix input changes.
-Run `just ci` in the Nix development environment and `nix flake check --all-systems --no-build` to validate the initialized project.
-Nix package builds are not required initialization validation.
-Review the final documents for remaining placeholders, obsolete template file references, and valid links, then commit the initialized project.
-
-## Publication setup
-
-### crates.io
-
-- Publishing to crates.io is optional and independent of FlakeHub.
-- This template does not include a crates.io publishing workflow. Do not imply that Git pushes publish the crate.
-- Before publication, confirm the crate name and ownership under an account the user controls, complete the package metadata, and review the package contents with `cargo package --list` and `cargo publish --dry-run` inside `nix develop`.
-- Do not publish or add publishing credentials without explicit user authorization. If crates.io distribution is not intended, set `publish = false` in `Cargo.toml` and omit crates.io installation instructions.
-
-Reference: [Cargo publishing guide](https://doc.rust-lang.org/cargo/reference/publishing.html).
-
-### FlakeHub rolling publication
-
-- Keep `.github/workflows/flakehub-publish-rolling.yml.disabled` disabled until the copied project explicitly enables publication. Delete it if FlakeHub publication is not needed.
-- Use the [official FlakeHub publishing wizard](https://flakehub.com/new) to verify the repository name, public visibility, and trusted GitHub organization binding.
-- Keep shared `totto2727-org/monorepo` action references on `@main`. Review their current implementation and pin third-party actions to audited full commit SHAs before enabling publication.
-- Protect `main`, verify that the workflow publishes only pushes to `main` with job-scoped OIDC permissions, and complete `just ci` and `nix flake check --all-systems --no-build` before renaming the disabled file to `flakehub-publish-rolling.yml`.
-- Do not enable publication before the required repository settings are configured. Enabling FlakeHub does not require crates.io publication.
+_This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._
