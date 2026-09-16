@@ -5,6 +5,7 @@
 It reads the package name and version using `cargo metadata` and checks the exact version on crates.io.
 HTTP 200 skips publication, HTTP 404 runs `cargo publish --locked --registry crates-io`, and other responses fail the job rather than assuming the version is unpublished.
 Registry lookup failures and Cargo publication failures are reported by the job.
+The version-check step writes its decision to `GITHUB_OUTPUT`; a separate publish step runs only for an unpublished version and receives the registry token.
 
 ## Setup
 
