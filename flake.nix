@@ -26,7 +26,7 @@
               pkgs.actionlint
               pkgs.git
               pkgs.just
-                pkgs.rustup
+              pkgs.rustup
               pkgs.shellcheck
             ];
           };
