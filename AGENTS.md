@@ -46,9 +46,9 @@ First-chunk and stream-idle timeout durations remain a neutral application strea
 ## Publication
 
 Read [the publishing guide](./docs/publishing.md) before changing or running the crates.io workflow.
-Publishing is manual-only, requires an existing version-matching tag on main, and uses a token stored in the protected `crates-io` GitHub environment.
-Do not dispatch publishing, create releases, or install secrets merely to test CI.
-Keep the template's shared Nix action on `@main` in ordinary read-only CI; the privileged publish workflow uses directly reviewed SHA-pinned actions instead.
+Publishing runs on pushes to `main`, skips versions already on crates.io, and uses a token stored in the `crates-io` GitHub environment.
+Do not merge, publish, create releases, or install secrets merely to test CI.
+Both workflows use the template's shared Nix action on `@main` and load the development environment with `nix print-dev-env`.
 Never treat a local dry run as proof of registry ownership or configured GitHub environment protection.
 
 _This AGENTS.md was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [AGENTS template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/agents/template.md)._
