@@ -1,10 +1,10 @@
 {
-  description = "A simple Rust CLI template";
+  description = "Shared OpenAI-compatible agent configuration for Rust applications";
 
   inputs.nixpkgs.url = "https://flakehub.com/f/NixOS/nixpkgs/0.1";
 
   outputs =
-    { self, nixpkgs, ... }:
+    { nixpkgs, ... }:
     let
       supportedSystems = [
         "aarch64-darwin"
@@ -12,32 +12,13 @@
         "x86_64-linux"
       ];
       forEachSystem = nixpkgs.lib.genAttrs supportedSystems;
-      overlay = final: _previous: {
-        project = final.callPackage ./package.nix { };
-      };
-      mkPkgs = system: import nixpkgs {
-        inherit system;
-        overlays = [ overlay ];
-      };
     in
     {
-      overlays.default = overlay;
-
-      packages = forEachSystem (
-        system:
-        let
-          pkgs = mkPkgs system;
-        in
-        rec {
-          inherit (pkgs) project;
-          default = project;
-        }
-      );
-
+      # This project is a Cargo library, not an installable CLI application.
       devShells = forEachSystem (
         system:
         let
-          pkgs = mkPkgs system;
+          pkgs = nixpkgs.legacyPackages.${system};
         in
         {
           default = pkgs.mkShell {

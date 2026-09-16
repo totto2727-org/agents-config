@@ -1,14 +1,122 @@
-# Rust Simple CLI Template
+# llm-profiles
 
-Create a repository with [Use this template](https://github.com/totto2727-org/template-rust-simple/generate), then use an AI coding agent to initialize it by following [AGENTS.md](./AGENTS.md).
+`llm-profiles` lets independent applications share named OpenAI-compatible providers and credentials, then convert validated settings into their own library types.
+It has no dependency on GlossShift or GPUI, and Rig support is optional.
 
-Give the agent your project name, purpose, and intended publication targets, for example:
+## Usage
 
-```text
-Read AGENTS.md and initialize this repository according to its instructions.
-Project: <owner/repository and crate/command name>
-Purpose: <what the project should do>
-Publication: <crates.io, FlakeHub, or neither>
-Customize the project metadata and documentation for this project.
-Do not publish packages or enable publishing workflows before the required publication settings are configured.
+Use the same configured provider for an assistant in another Rust application:
+
+```rust
+use llm_profiles::{AgentConfigPaths, load_from_paths};
+use rig::completion::Prompt;
+
+async fn summarize() -> Result<String, Box<dyn std::error::Error>> {
+    let config = load_from_paths(AgentConfigPaths::standard()?)?;
+    let provider = config.provider("opencode-go")?;
+    let agent = provider.rig_agent_builder(None)?
+        .preamble("Summarize in one sentence.")
+        .build();
+    Ok(agent.prompt("The release adds shared agent configuration and reusable provider adapters.").await?)
+}
 ```
+
+The crate applies connection settings, model, and additional request parameters to a Rig `AgentBuilder`, without building the agent.
+The application adds prompts and tools, calls `.build()`, and owns runtime behavior.
+Call `active_provider()` instead of `provider("opencode-go")` to follow the shared default.
+A session ID is optional and only expands `${session_id}` in custom headers.
+Pass `None` to omit headers containing that placeholder, or `Some("summary-session-1")` when the provider needs them.
+Fixed headers remain unchanged; this crate never generates session IDs.
+Never log the exposed API key, request parameters containing secrets, or raw configuration content.
+
+## Key features
+
+- Multiple named providers and a shared `active_provider` selection.
+- OpenAI Chat Completions-compatible URLs, models, named API keys, custom headers, and additional JSON request fields.
+- `${session_id}` header expansion without environment-variable interpolation.
+- Explicit paths or desktop-wide `~/.agents` defaults without current-directory discovery.
+- Credential-file permissions of `0600` on Unix.
+- A library-neutral `ResolvedProvider` and `ProviderAdapter` interface, with optional Rig 0.41 conversion.
+
+## Prerequisites
+
+- A Rust application using edition 2024 or a compatible toolchain.
+- Credentials and a model supported by an OpenAI-compatible Chat Completions service.
+
+## Setup
+
+This crate is currently an independent local repository in the virtual monorepo, not a published registry package.
+From an application under `app/<name>/`, add:
+
+```toml
+[dependencies]
+llm-profiles = { path = "../../package/llm-profiles", features = ["rig"] }
+rig = "0.41"
+```
+
+Omit the `rig` feature and the direct `rig` dependency when implementing an adapter for another library.
+
+## Configuration
+
+By default, configuration comes from `~/.agents/config.toml`, with keys in `~/.agents/credentials.toml`.
+`AGENTS_CONFIG=/absolute/path/config.toml` overrides the configuration path and selects its sibling `credentials.toml`.
+The loader never searches the working directory, so desktop and command-line consumers do not accidentally use different project settings.
+
+```toml
+# ~/.agents/config.toml
+active_provider = "opencode-go"
+
+[providers.openai]
+base_url = "https://api.openai.com/v1"
+model = "gpt-4.1-mini"
+credential = "openai"
+
+[providers.opencode-go]
+base_url = "https://opencode.ai/zen/go/v1"
+model = "kimi-k2.5"
+credential = "opencode"
+first_chunk_timeout_seconds = 30
+stream_idle_timeout_seconds = 60
+
+[providers.opencode-go.headers]
+x-opencode-session = "${session_id}"
+User-Agent = "my-assistant/0.1.0"
+
+# Optional fields supported by your selected provider and model:
+# [providers.opencode-go.request_parameters]
+# reasoning_effort = "none"
+```
+
+Choose a model available to your account.
+The URL must use HTTP or HTTPS and include the API prefix, such as `/v1` or `/zen/go/v1`, without user information, query parameters, or a fragment.
+Each `credential` references a named entry below, independently of the provider name:
+
+```toml
+# ~/.agents/credentials.toml
+[credentials.openai]
+api_key = "replace-me"
+
+[credentials.opencode]
+api_key = "replace-me"
+```
+
+Replace placeholders before issuing requests, and never commit real credentials.
+The initializer creates missing templates without overwriting existing files.
+Configured providers must have resolvable credentials, non-empty model names, valid headers, and positive timeouts.
+First-chunk and stream-idle timeouts default to 30 and 60 seconds respectively.
+These are application streaming policies: the Rig agent type does not enforce them, so consumers must apply `first_chunk_timeout()` and `stream_idle_timeout()` around stream polling.
+Other placeholders, including `${HOME}`, remain literal header text.
+
+## API
+
+See the [API reference on docs.rs](https://docs.rs/llm-profiles/latest/llm_profiles/) after the first crate publication.
+
+## Development
+
+See [AGENTS.md](./AGENTS.md) for repository boundaries and validation commands.
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
+
+_This README was generated from the [share-artifact skill](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/SKILL.md) and [README template](https://raw.githubusercontent.com/totto2727-org/agent/refs/heads/main/plugins/totto2727-coding/skills/share-artifact/readme/template.md)._

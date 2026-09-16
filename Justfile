@@ -25,7 +25,8 @@ build:
 test:
     cargo test --all-features
 
-run:
-    cargo run
+# Check registry publication without a token or any upload.
+publish-dry-run:
+    cargo publish --registry crates-io --dry-run
 
 ci: check build test

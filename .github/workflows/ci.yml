@@ -19,3 +19,4 @@ jobs:
         run: |
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           just ci
+          just publish-dry-run

@@ -4,3 +4,7 @@
 .DS_Store
 result
 result-*
+
+# Local development and acceptance artifacts
+/tmp/
+__pycache__/
