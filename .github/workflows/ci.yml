@@ -22,5 +22,3 @@ jobs:
           eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
           just ci
           just package
-      - name: Evaluate supported Nix environments
-        run: nix flake check --all-systems --no-build

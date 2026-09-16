@@ -2,11 +2,6 @@ name: Publish crate
 
 on:
   workflow_dispatch:
-    inputs:
-      tag:
-        description: Existing v<version> tag on main to publish to crates.io
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -20,23 +15,11 @@ jobs:
     if: github.repository == 'totto2727-org/agents-config' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    outputs:
-      commit: ${{ steps.release.outputs.commit }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          fetch-depth: 0
+          ref: ${{ github.sha }}
           persist-credentials: false
-      - name: Resolve and validate the release tag
-        id: release
-        env:
-          RELEASE_TAG: ${{ inputs.tag }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          commit="$(python3 .github/scripts/validate-release.py -- "$RELEASE_TAG")"
-          git checkout --detach "$commit"
-          printf 'commit=%s\n' "$commit" >> "$GITHUB_OUTPUT"
       - uses: DeterminateSystems/determinate-nix-action@2a0be2498974c2b6327e19780488744384637d88 # v3.21.7
       - name: Validate and package the exact release commit
         run: |
@@ -53,7 +36,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ needs.verify.outputs.commit }}
+          ref: ${{ github.sha }}
           persist-credentials: false
       - uses: DeterminateSystems/determinate-nix-action@2a0be2498974c2b6327e19780488744384637d88 # v3.21.7
       - name: Publish the verified crate

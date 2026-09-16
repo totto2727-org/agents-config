@@ -26,8 +26,7 @@
               pkgs.actionlint
               pkgs.git
               pkgs.just
-              pkgs.python3
-              pkgs.rustup
+                pkgs.rustup
               pkgs.shellcheck
             ];
           };

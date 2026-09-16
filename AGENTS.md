@@ -20,7 +20,6 @@ Review `.envrc` before explicitly allowing direnv.
 - `just check` checks formatting, strict Clippy with and without optional features, and GitHub Actions with actionlint/ShellCheck.
 - `just build` builds with all features enabled.
 - `just test` runs tests with and without Rig.
-- `just test-release` runs the release guard against real temporary Git repositories.
 - `just ci` runs the complete local validation gate.
 - `just package` verifies the packaged crate with and without Rig; run from a clean committed checkout.
 - `just publish-dry-run` checks registry publication without uploading or requiring a publishing token.

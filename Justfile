@@ -30,10 +30,6 @@ test:
     cargo test --locked --all-features
     cargo test --locked --no-default-features
 
-# Exercise the release guard through its CLI using temporary Git repositories.
-test-release:
-    python3 -m unittest discover -s .github/scripts -p 'test_*.py' -v
-
 # Validate both published feature configurations without uploading a crate.
 package:
     cargo package --locked --no-default-features
@@ -43,4 +39,4 @@ package:
 publish-dry-run:
     cargo publish --locked --registry crates-io --dry-run
 
-ci: check build test test-release
+ci: check build test

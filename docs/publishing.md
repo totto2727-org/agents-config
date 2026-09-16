@@ -2,7 +2,7 @@
 
 The repository has two independent workflows:
 
-- `CI` runs validation, release-guard tests, packaged-crate verification, and Nix output evaluation on pull requests and pushes to `main`.
+- `CI` runs validation, and packaged-crate verification on pull requests and pushes to `main`.
 - `Publish crate` is manual-only (`workflow_dispatch`). A push, tag push, pull request, or merge does not publish a crate.
 
 No version has been published by adding these workflows.
@@ -26,19 +26,16 @@ An organization administrator must approve the integration when that policy appl
 ## Release procedure
 
 1. Update the package version and `Cargo.lock`, validate the change, and merge it into `main`.
-2. Create and push a tag exactly equal to `v<Cargo.toml version>`, such as `v0.1.0`, on the intended release commit.
-3. Open Actions → Publish crate → Run workflow, select the `main` branch, and enter the existing tag.
-4. Review the validation result and immutable commit SHA before approving the `crates-io` deployment.
+2. Open Actions → Publish crate → Run workflow and select the `main` branch.
+3. Review the validation result and immutable commit SHA before approving the `crates-io` deployment.
 
 The validation job checks that:
 
 - The workflow runs only in `totto2727-org/agents-config` from `main`.
-- The supplied tag exists and resolves to a commit reachable from `origin/main`.
-- The tagged package is named `agents-config`, the tag matches its version exactly, and its allowed registry is only `crates-io`.
-- Formatting, Clippy, library tests with and without Rig, and release-guard tests pass.
+- Formatting, Clippy, library tests with and without Rig pass.
 - The packaged source builds with and without Rig, and `cargo publish --dry-run` succeeds.
 
-The publishing job checks out the immutable validated commit, not a potentially moved tag.
+Both jobs check out the same immutable `github.sha` captured when the workflow is dispatched.
 All actions in the publishing workflow are pinned to reviewed commit SHAs.
 The crates.io token is passed only to the final upload step, after the protected-environment approval.
 The workflow grants only `contents: read`, does not request OIDC permissions, disables persisted checkout credentials, and serializes publication attempts without cancelling an in-progress upload.
@@ -57,14 +54,12 @@ From the repository root, use the template-derived environment:
 
 ```bash
 nix develop --command just ci
-nix flake check --all-systems --no-build
 nix develop --command just package
 nix develop --command just publish-dry-run
 ```
 
 Run packaging commands from a clean committed checkout.
 The dry-run command does not upload or reserve the crate name and is not evidence that registry authentication or GitHub environment protection has been configured.
-The Python release-guard tests invoke the real validation CLI against temporary Git repositories, covering accepted tags, wrong versions, commits outside main, missing tags, wrong package names, registry restrictions, and malformed tag input.
 
 ## Sources
 
