@@ -21,8 +21,7 @@ Review `.envrc` before explicitly allowing direnv.
 - `just build` builds with all features enabled.
 - `just test` runs tests with all features.
 - `just ci` runs the complete local validation gate.
-- `just package` verifies the packaged crate with all features; run from a clean committed checkout.
-- `just publish-dry-run` checks registry publication without uploading or requiring a publishing token.
+- `just publish-dry-run` packages and verifies the crate without uploading or requiring a publishing token; run from a clean committed checkout.
 - `nix flake check --all-systems --no-build` evaluates all supported development-shell outputs.
 
 ## Architecture

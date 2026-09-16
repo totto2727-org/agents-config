@@ -25,10 +25,6 @@ build:
 test:
     cargo test --all-features
 
-# Validate the packaged crate with all features without uploading.
-package:
-    cargo package --all-features
-
 # Check registry publication without a token or any upload.
 publish-dry-run:
     cargo publish --registry crates-io --dry-run
