@@ -9,25 +9,24 @@ Use the same configured provider for an assistant in another Rust application:
 
 ```rust
 use agents_config::{AgentConfigPaths, load_from_paths};
-use rig::{client::AgentClientExt, completion::Prompt};
-use serde_json::Value;
+use rig::completion::Prompt;
 
 async fn summarize() -> Result<String, Box<dyn std::error::Error>> {
     let config = load_from_paths(AgentConfigPaths::standard()?)?;
     let provider = config.provider("opencode-go")?;
-    let client = provider.rig_completions_client_builder("summary-session-1")?.build()?;
-    let agent = client.agent(provider.model())
-        .additional_params(Value::Object(provider.request_parameters().clone()))
+    let agent = provider.rig_agent_builder(None)?
         .preamble("Summarize in one sentence.")
         .build();
     Ok(agent.prompt("The release adds shared agent configuration and reusable provider adapters.").await?)
 }
 ```
 
-The crate converts URL, credential, and headers into a Rig client builder.
-The application builds the client and agent, applies model and request parameters, and owns prompts, tools, and runtime behavior.
+The crate applies connection settings, model, and additional request parameters to a Rig `AgentBuilder`, without building the agent.
+The application adds prompts and tools, calls `.build()`, and owns runtime behavior.
 Call `active_provider()` instead of `provider("opencode-go")` to follow the shared default.
-Supply a distinct session ID for each independent conversation or operation.
+A session ID is optional and only expands `${session_id}` in custom headers.
+Pass `None` to omit headers containing that placeholder, or `Some("summary-session-1")` when the provider needs them.
+Fixed headers remain unchanged; this crate never generates session IDs.
 Never log the exposed API key, request parameters containing secrets, or raw configuration content.
 
 ## Key features
@@ -53,7 +52,6 @@ From an application under `app/<name>/`, add:
 [dependencies]
 agents-config = { path = "../../package/agents-config", features = ["rig"] }
 rig = "0.41"
-serde_json = "1"
 ```
 
 Omit the `rig` feature and the direct `rig` dependency when implementing an adapter for another library.
@@ -117,8 +115,8 @@ Other placeholders, including `${HOME}`, remain literal header text.
 - `load_or_initialize(paths)` additionally creates missing template files.
 - `LoadedAgentsConfig::providers()` enumerates named providers, while `provider(name)` and `active_provider()` select one.
 - `ResolvedProvider` exposes the validated URL, model, named credential, API key, expanded headers, additional parameters, and timeout durations for downstream adapters.
-- `rig_completions_client_builder(session_id)` returns a Rig-native connection builder without building a client or agent.
-- Callers use `model()` and `request_parameters()` when assembling their own agents.
+- `rig_agent_builder(session_id: Option<&str>)` returns a Rig-native `AgentBuilder` with connection, model, and request parameters applied, without building the agent.
+- Callers add prompts and tools before calling `.build()`.
 
 For a different library, implement `ProviderAdapter` with that library's configuration, request, or client type as `Output`:
 
@@ -132,7 +130,7 @@ impl ProviderAdapter for ModelSelection {
     type Output = String;
     type Error = Infallible;
 
-    fn adapt(&self, provider: &ResolvedProvider, _session_id: &str) -> Result<String, Infallible> {
+    fn adapt(&self, provider: &ResolvedProvider, _session_id: Option<&str>) -> Result<String, Infallible> {
         Ok(provider.model().to_owned())
     }
 }

@@ -30,8 +30,9 @@ Review `.envrc` before explicitly allowing direnv.
 Keep filesystem and environment discovery at the loading boundary.
 Only the explicit shared configuration path or the home-directory default selects providers; do not introduce implicit project-directory discovery.
 Keep provider settings independent of consumer UI and prompts.
-`ProviderAdapter` permits downstream library types, while the optional `rig` feature owns Rig-specific connection configuration conversion only.
-Client and agent construction, prompts, tools, and runtime policies belong to consumers.
+`ProviderAdapter` permits downstream library types, while the optional `rig` feature owns Rig-specific connection, model, and request-parameter conversion into an `AgentBuilder`.
+The adapter constructs the underlying client but never builds the agent.
+Final agent construction, prompts, tools, and runtime policies belong to consumers.
 First-chunk and stream-idle timeout durations remain a neutral application streaming policy, not an implicit Rig timeout guarantee.
 
 ## Package-specific rules

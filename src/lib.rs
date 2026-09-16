@@ -210,15 +210,21 @@ impl ResolvedProvider {
     }
 
     /// Expand `${session_id}` in configured values and validate HTTP headers.
+    /// With `None`, omit only headers containing that placeholder.
     ///
     /// # Errors
     /// Returns an error if expansion cannot form a valid HTTP header.
-    pub fn headers(&self, session_id: &str) -> Result<HeaderMap, ConfigError> {
+    pub fn headers(&self, session_id: Option<&str>) -> Result<HeaderMap, ConfigError> {
         let mut headers = HeaderMap::new();
         for (name, template) in &self.headers {
             let name = HeaderName::from_bytes(name.as_bytes())
                 .map_err(|_| ConfigError::InvalidHeaderName(name.clone()))?;
-            let mut value = HeaderValue::from_str(&template.replace("${session_id}", session_id))
+            let expanded = match session_id {
+                Some(id) => template.replace("${session_id}", id),
+                None if template.contains("${session_id}") => continue,
+                None => template.clone(),
+            };
+            let mut value = HeaderValue::from_str(&expanded)
                 .map_err(|_| ConfigError::InvalidHeaderValue(name.to_string()))?;
             value.set_sensitive(true);
             if headers.insert(name.clone(), value).is_some() {
@@ -230,7 +236,7 @@ impl ResolvedProvider {
 
     /// # Errors
     /// Propagates the adapter's conversion error.
-    pub fn adapt<A>(&self, adapter: &A, session_id: &str) -> Result<A::Output, A::Error>
+    pub fn adapt<A>(&self, adapter: &A, session_id: Option<&str>) -> Result<A::Output, A::Error>
     where
         A: ProviderAdapter,
     {
@@ -248,13 +254,16 @@ pub trait ProviderAdapter {
     fn adapt(
         &self,
         provider: &ResolvedProvider,
-        session_id: &str,
+        session_id: Option<&str>,
     ) -> Result<Self::Output, Self::Error>;
 }
 
 /// Errors omit configuration source and all credential or header values.
 #[derive(Debug, Error)]
 pub enum ConfigError {
+    #[cfg(feature = "rig")]
+    #[error("failed to build the Rig client")]
+    RigClientBuild,
     #[error("HOME is unavailable and AGENTS_CONFIG is not set")]
     HomeUnavailable,
     #[error("invalid configuration path: {0}")]
@@ -541,21 +550,33 @@ const fn default_stream_idle_timeout() -> u64 {
 
 #[cfg(feature = "rig")]
 impl ResolvedProvider {
-    /// Convert connection settings to a Rig Chat Completions client builder.
+    /// Convert provider settings to a Rig agent builder without building the agent.
     ///
-    /// The caller builds the client and agent, applying `model()` and
-    /// `request_parameters()` and choosing prompts, tools, and runtime policies.
+    /// Applies the connection, model, and additional request parameters.
+    /// The optional session ID only expands headers; `None` omits session headers.
+    /// Callers add prompts and tools, then build the agent and own runtime policies.
     ///
     /// # Errors
-    /// Returns an error if expanded headers cannot form valid HTTP headers.
-    pub fn rig_completions_client_builder(
+    /// Returns an error if headers are invalid or the underlying client cannot be built.
+    pub fn rig_agent_builder(
         &self,
-        session_id: &str,
-    ) -> Result<rig::providers::openai::CompletionsClientBuilder, ConfigError> {
-        Ok(rig::providers::openai::CompletionsClient::builder()
+        session_id: Option<&str>,
+    ) -> Result<rig::agent::AgentBuilder<rig::providers::openai::CompletionModel>, ConfigError>
+    {
+        use rig::client::AgentClientExt as _;
+
+        let client = rig::providers::openai::CompletionsClient::builder()
             .api_key(self.api_key())
             .base_url(self.base_url.to_string())
-            .http_headers(self.headers(session_id)?))
+            .http_headers(self.headers(session_id)?)
+            .build()
+            .map_err(|_| ConfigError::RigClientBuild)?;
+        let builder = client.agent(self.model());
+        Ok(if self.request_parameters.is_empty() {
+            builder
+        } else {
+            builder.additional_params(Value::Object(self.request_parameters.clone()))
+        })
     }
 }
 

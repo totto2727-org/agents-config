@@ -69,7 +69,7 @@ fn resolves_selected_provider_with_all_neutral_fields() {
         &serde_json::Map::from_iter([(String::from("reasoning_effort"), json!("none"))])
     );
     let headers = provider
-        .headers("session-7")
+        .headers(Some("session-7"))
         .unwrap_or_else(|error| panic!("headers: {error}"));
     assert_eq!(headers["x-opencode-session"], "session-7");
 }
@@ -78,17 +78,12 @@ fn resolves_selected_provider_with_all_neutral_fields() {
 #[test]
 fn caller_builds_named_agent_from_rig_connection_settings() -> Result<(), Box<dyn std::error::Error>>
 {
-    use rig::client::AgentClientExt as _;
-
     let temp = TempDir::new()?;
     let loaded = load_from_paths(write_config(&temp, CONFIG, CREDENTIALS))?;
     let provider = loaded.active_provider()?;
-    let settings: rig::providers::openai::CompletionsClientBuilder =
-        provider.rig_completions_client_builder("caller-session")?;
-    let client = settings.build()?;
-    let agent = client
-        .agent(provider.model())
-        .additional_params(Value::Object(provider.request_parameters().clone()))
+    let settings: rig::agent::AgentBuilder<rig::providers::openai::CompletionModel> =
+        provider.rig_agent_builder(None)?;
+    let agent = settings
         .name("caller-owned-agent")
         .preamble("Caller-owned instructions")
         .build();
@@ -114,7 +109,7 @@ impl ProviderAdapter for SnapshotAdapter {
     fn adapt(
         &self,
         provider: &ResolvedProvider,
-        session_id: &str,
+        session_id: Option<&str>,
     ) -> Result<Self::Output, Self::Error> {
         let headers = provider.headers(session_id)?;
         Ok(Snapshot {
@@ -138,7 +133,7 @@ fn custom_adapter_receives_selected_provider_without_rig() {
     let snapshot = loaded
         .active_provider()
         .unwrap_or_else(|error| panic!("active: {error}"))
-        .adapt(&SnapshotAdapter, "custom-session")
+        .adapt(&SnapshotAdapter, Some("custom-session"))
         .unwrap_or_else(|error| panic!("adapt provider: {error}"));
 
     assert_eq!(snapshot.model, "gpt-5.6-luna");
@@ -173,10 +168,37 @@ fn expanded_headers_are_sensitive() {
     let headers = loaded
         .active_provider()
         .unwrap_or_else(|error| panic!("active: {error}"))
-        .headers("private-session")
+        .headers(Some("private-session"))
         .unwrap_or_else(|error| panic!("headers: {error}"));
     assert!(headers["x-opencode-session"].is_sensitive());
     assert!(!format!("{headers:?}").contains("private-session"));
+}
+
+#[test]
+fn omitted_session_only_removes_headers_that_require_it() -> Result<(), Box<dyn std::error::Error>>
+{
+    let temp = TempDir::new()?;
+    let config = CONFIG.replace("x-client = \"test\"", "x-client = \"${unknown}\"");
+    let loaded = load_from_paths(write_config(&temp, &config, CREDENTIALS))?;
+    let headers = loaded.active_provider()?.headers(None)?;
+
+    assert_eq!(headers.len(), 1);
+    assert_eq!(headers["x-client"], "${unknown}");
+    assert!(headers["x-client"].is_sensitive());
+    assert!(!headers.contains_key("x-opencode-session"));
+    Ok(())
+}
+
+#[cfg(feature = "rig")]
+#[test]
+fn rig_builder_rejects_invalid_expanded_session_header() -> Result<(), Box<dyn std::error::Error>> {
+    let temp = TempDir::new()?;
+    let loaded = load_from_paths(write_config(&temp, CONFIG, CREDENTIALS))?;
+    assert!(matches!(
+        loaded.active_provider()?.rig_agent_builder(Some("invalid\nsession")),
+        Err(ConfigError::InvalidHeaderValue(name)) if name == "x-opencode-session"
+    ));
+    Ok(())
 }
 
 #[test]
@@ -191,7 +213,7 @@ fn headers_expand_every_session_placeholder_and_preserve_unknown_literals() {
     let headers = loaded
         .active_provider()
         .unwrap_or_else(|error| panic!("active: {error}"))
-        .headers("session-9")
+        .headers(Some("session-9"))
         .unwrap_or_else(|error| panic!("headers: {error}"));
     assert_eq!(headers["x-client"], "session-9-session-9-${unknown}");
 }
