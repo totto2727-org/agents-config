@@ -15,7 +15,7 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-        metadata="$(cargo metadata --locked --no-deps --format-version 1)"
+        metadata="$(cargo metadata --no-deps --format-version 1)"
         package="$(jq -er --arg manifest "$PWD/Cargo.toml" '.packages[] | select(.manifest_path == $manifest) | [.name, .version] | @tsv' <<< "$metadata")"
         read -r name version <<< "$package"
         status="$(curl --user-agent "publish-crate (https://github.com/$GITHUB_REPOSITORY)" --silent --show-error --retry 3 --output /dev/null --write-out '%{http_code}' "https://crates.io/api/v1/crates/$name/$version")"
@@ -30,4 +30,4 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       run: |
         eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-        cargo publish --locked --registry crates-io
+        cargo publish --registry crates-io

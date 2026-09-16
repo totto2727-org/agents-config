@@ -3,7 +3,7 @@
 `CI` validates the crate and its packaged source on pull requests and pushes to `main`.
 `Publish crate` runs on every push to `main`, including merged pull requests.
 It reads the package name and version using `cargo metadata` and checks the exact version on crates.io.
-HTTP 200 skips publication, HTTP 404 runs `cargo publish --locked --registry crates-io`, and other responses fail the job rather than assuming the version is unpublished.
+HTTP 200 skips publication, HTTP 404 runs `cargo publish --registry crates-io`, and other responses fail the job rather than assuming the version is unpublished.
 Registry lookup failures and Cargo publication failures are reported by the job.
 The local `.github/actions/publish-crate/action.yaml` composite action owns version lookup and publication.
 Like `publish-npm`, it accepts a required `working-directory` input, loads the caller workspace’s Nix environment, and inherits authentication from the caller’s environment.
