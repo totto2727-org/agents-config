@@ -9,17 +9,23 @@ Use the same configured provider for an assistant in another Rust application:
 
 ```rust
 use agents_config::{AgentConfigPaths, load_from_paths};
-use rig::completion::Prompt;
+use rig::{client::AgentClientExt, completion::Prompt};
+use serde_json::Value;
 
 async fn summarize() -> Result<String, Box<dyn std::error::Error>> {
     let config = load_from_paths(AgentConfigPaths::standard()?)?;
     let provider = config.provider("opencode-go")?;
-    let agent = provider.rig_agent("summary-session-1", "Summarize in one sentence.")?;
+    let client = provider.rig_completions_client_builder("summary-session-1")?.build()?;
+    let agent = client.agent(provider.model())
+        .additional_params(Value::Object(provider.request_parameters().clone()))
+        .preamble("Summarize in one sentence.")
+        .build();
     Ok(agent.prompt("The release adds shared agent configuration and reusable provider adapters.").await?)
 }
 ```
 
-The provider's URL, credential, model, headers, and additional request parameters configure the Rig agent.
+The crate converts URL, credential, and headers into a Rig client builder.
+The application builds the client and agent, applies model and request parameters, and owns prompts, tools, and runtime behavior.
 Call `active_provider()` instead of `provider("opencode-go")` to follow the shared default.
 Supply a distinct session ID for each independent conversation or operation.
 Never log the exposed API key, request parameters containing secrets, or raw configuration content.
@@ -47,6 +53,7 @@ From an application under `app/<name>/`, add:
 [dependencies]
 agents-config = { path = "../../package/agents-config", features = ["rig"] }
 rig = "0.41"
+serde_json = "1"
 ```
 
 Omit the `rig` feature and the direct `rig` dependency when implementing an adapter for another library.
@@ -110,8 +117,8 @@ Other placeholders, including `${HOME}`, remain literal header text.
 - `load_or_initialize(paths)` additionally creates missing template files.
 - `LoadedAgentsConfig::providers()` enumerates named providers, while `provider(name)` and `active_provider()` select one.
 - `ResolvedProvider` exposes the validated URL, model, named credential, API key, expanded headers, additional parameters, and timeout durations for downstream adapters.
-- `rig_agent(session_id, preamble)` applies the selected model and request parameters as well as the connection settings.
-- `rig_completions_client(session_id)` returns only the configured client; callers using this lower-level API must apply model and request parameters themselves.
+- `rig_completions_client_builder(session_id)` returns a Rig-native connection builder without building a client or agent.
+- Callers use `model()` and `request_parameters()` when assembling their own agents.
 
 For a different library, implement `ProviderAdapter` with that library's configuration, request, or client type as `Output`:
 

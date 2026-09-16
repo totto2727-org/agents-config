@@ -74,6 +74,29 @@ fn resolves_selected_provider_with_all_neutral_fields() {
     assert_eq!(headers["x-opencode-session"], "session-7");
 }
 
+#[cfg(feature = "rig")]
+#[test]
+fn caller_builds_named_agent_from_rig_connection_settings() -> Result<(), Box<dyn std::error::Error>>
+{
+    use rig::client::AgentClientExt as _;
+
+    let temp = TempDir::new()?;
+    let loaded = load_from_paths(write_config(&temp, CONFIG, CREDENTIALS))?;
+    let provider = loaded.active_provider()?;
+    let settings: rig::providers::openai::CompletionsClientBuilder =
+        provider.rig_completions_client_builder("caller-session")?;
+    let client = settings.build()?;
+    let agent = client
+        .agent(provider.model())
+        .additional_params(Value::Object(provider.request_parameters().clone()))
+        .name("caller-owned-agent")
+        .preamble("Caller-owned instructions")
+        .build();
+
+    assert_eq!(agent.name(), Some("caller-owned-agent"));
+    Ok(())
+}
+
 struct SnapshotAdapter;
 
 struct Snapshot {

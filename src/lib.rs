@@ -541,43 +541,21 @@ const fn default_stream_idle_timeout() -> u64 {
 
 #[cfg(feature = "rig")]
 impl ResolvedProvider {
-    /// Build a Rig 0.41 OpenAI-compatible Chat Completions client for this provider.
+    /// Convert connection settings to a Rig Chat Completions client builder.
+    ///
+    /// The caller builds the client and agent, applying `model()` and
+    /// `request_parameters()` and choosing prompts, tools, and runtime policies.
     ///
     /// # Errors
-    /// Returns an error if configured headers or the Rig client cannot be constructed.
-    pub fn rig_completions_client(
+    /// Returns an error if expanded headers cannot form valid HTTP headers.
+    pub fn rig_completions_client_builder(
         &self,
         session_id: &str,
-    ) -> Result<rig::providers::openai::CompletionsClient, ConfigError> {
-        use rig::providers::openai;
-        openai::CompletionsClient::builder()
+    ) -> Result<rig::providers::openai::CompletionsClientBuilder, ConfigError> {
+        Ok(rig::providers::openai::CompletionsClient::builder()
             .api_key(self.api_key())
             .base_url(self.base_url.to_string())
-            .http_headers(self.headers(session_id)?)
-            .build()
-            .map_err(|_| ConfigError::InvalidBaseUrl(self.name.clone()))
-    }
-
-    /// Build a Rig 0.41 agent with this provider's model and additional request parameters.
-    ///
-    /// # Errors
-    /// Propagates errors while constructing the underlying Rig client.
-    pub fn rig_agent(
-        &self,
-        session_id: &str,
-        preamble: &str,
-    ) -> Result<rig::agent::Agent<rig::providers::openai::CompletionModel>, ConfigError> {
-        use rig::prelude::*;
-
-        let client = self.rig_completions_client(session_id)?;
-        let builder = client.agent(self.model()).preamble(preamble);
-        Ok(if self.request_parameters.is_empty() {
-            builder.build()
-        } else {
-            builder
-                .additional_params(Value::Object(self.request_parameters.clone()))
-                .build()
-        })
+            .http_headers(self.headers(session_id)?))
     }
 }
 
