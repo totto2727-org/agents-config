@@ -2,6 +2,7 @@
 
 `agents-config` lets independent applications share named OpenAI-compatible providers and credentials, then convert validated settings into their own library types.
 It has no dependency on GlossShift or GPUI, and Rig support is optional.
+API documentation is maintained in Rustdoc and will be available on [docs.rs](https://docs.rs/agents-config) after publication.
 
 ## Usage
 
@@ -106,38 +107,6 @@ Configured providers must have resolvable credentials, non-empty model names, va
 First-chunk and stream-idle timeouts default to 30 and 60 seconds respectively.
 These are application streaming policies: the Rig agent type does not enforce them, so consumers must apply `first_chunk_timeout()` and `stream_idle_timeout()` around stream polling.
 Other placeholders, including `${HOME}`, remain literal header text.
-
-## API
-
-- `AgentConfigPaths::standard()` selects `AGENTS_CONFIG` or the home-directory defaults.
-- `AgentConfigPaths::new(config, credentials)` accepts explicit, absolute, different paths.
-- `load_from_paths(paths)` reads existing files and validates providers and credentials.
-- `load_or_initialize(paths)` additionally creates missing template files.
-- `LoadedAgentsConfig::providers()` enumerates named providers, while `provider(name)` and `active_provider()` select one.
-- `ResolvedProvider` exposes the validated URL, model, named credential, API key, expanded headers, additional parameters, and timeout durations for downstream adapters.
-- `rig_agent_builder(session_id: Option<&str>)` returns a Rig-native `AgentBuilder` with connection, model, and request parameters applied, without building the agent.
-- Callers add prompts and tools before calling `.build()`.
-
-For a different library, implement `ProviderAdapter` with that library's configuration, request, or client type as `Output`:
-
-```rust
-use agents_config::{ProviderAdapter, ResolvedProvider};
-use std::convert::Infallible;
-
-struct ModelSelection;
-
-impl ProviderAdapter for ModelSelection {
-    type Output = String;
-    type Error = Infallible;
-
-    fn adapt(&self, provider: &ResolvedProvider, _session_id: Option<&str>) -> Result<String, Infallible> {
-        Ok(provider.model().to_owned())
-    }
-}
-```
-
-Call `provider.adapt(&ModelSelection, session_id)` for this minimal adapter, or use the other resolved getters to construct a complete third-party client configuration.
-No Rig feature is needed for custom adapters.
 
 ## Development
 

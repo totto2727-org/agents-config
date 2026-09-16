@@ -4,12 +4,16 @@ version = "0.1.0"
 edition = "2024"
 description = "Shared, validated OpenAI-compatible agent configuration"
 readme = "README.md"
+documentation = "https://docs.rs/agents-config"
 repository = "https://github.com/totto2727-org/agents-config"
 publish = ["crates-io"]
 include = ["src/**", "Cargo.toml", "Cargo.lock", "README.md", "AGENTS.md", "docs/**", "LICENSE"]
 license = "MIT"
 keywords = ["agents", "configuration", "openai-compatible"]
 categories = ["config"]
+
+[package.metadata.docs.rs]
+all-features = true
 
 [features]
 default = []

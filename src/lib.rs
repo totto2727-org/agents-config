@@ -245,6 +245,25 @@ impl ResolvedProvider {
 }
 
 /// Converts a resolved provider to an application-specific client or request type.
+///
+/// Implement this trait to convert settings into another library’s configuration type.
+/// No Rig feature is required. Use [`ResolvedProvider::adapt`] to run the conversion.
+///
+/// ```
+/// use agents_config::{ProviderAdapter, ResolvedProvider};
+/// use std::convert::Infallible;
+///
+/// struct ModelSelection;
+///
+/// impl ProviderAdapter for ModelSelection {
+///     type Output = String;
+///     type Error = Infallible;
+///
+///     fn adapt(&self, provider: &ResolvedProvider, _session_id: Option<&str>) -> Result<String, Infallible> {
+///         Ok(provider.model().to_owned())
+///     }
+/// }
+/// ```
 pub trait ProviderAdapter {
     type Output;
     type Error;
