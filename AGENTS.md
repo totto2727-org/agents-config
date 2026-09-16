@@ -17,11 +17,11 @@ Review `.envrc` before explicitly allowing direnv.
 
 - `just` lists available tasks without running checks or changing files.
 - `just fix` applies formatting and supported Clippy fixes.
-- `just check` checks formatting and strict Clippy with and without optional features.
+- `just check` checks formatting and strict Clippy with all features.
 - `just build` builds with all features enabled.
-- `just test` runs tests with and without Rig.
+- `just test` runs tests with all features.
 - `just ci` runs the complete local validation gate.
-- `just package` verifies the packaged crate with and without Rig; run from a clean committed checkout.
+- `just package` verifies the packaged crate with all features; run from a clean committed checkout.
 - `just publish-dry-run` checks registry publication without uploading or requiring a publishing token.
 - `nix flake check --all-systems --no-build` evaluates all supported development-shell outputs.
 

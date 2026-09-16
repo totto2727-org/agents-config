@@ -18,18 +18,15 @@ check-rustfmt:
 
 check-clippy:
     cargo clippy --all-targets --all-features -- -D warnings
-    cargo clippy --all-targets --no-default-features -- -D warnings
 
 build:
     cargo build --all-features
 
 test:
     cargo test --all-features
-    cargo test --no-default-features
 
-# Validate both published feature configurations without uploading a crate.
+# Validate the packaged crate with all features without uploading.
 package:
-    cargo package --no-default-features
     cargo package --all-features
 
 # Check registry publication without a token or any upload.

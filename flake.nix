@@ -23,9 +23,6 @@
         {
           default = pkgs.mkShell {
             packages = [
-              pkgs.git
-              pkgs.curl
-              pkgs.jq
               pkgs.just
               pkgs.rustup
             ];
