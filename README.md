@@ -2,7 +2,6 @@
 
 `agents-config` lets independent applications share named OpenAI-compatible providers and credentials, then convert validated settings into their own library types.
 It has no dependency on GlossShift or GPUI, and Rig support is optional.
-API documentation is maintained in Rustdoc and will be available on [docs.rs](https://docs.rs/agents-config) after publication.
 
 ## Usage
 
@@ -107,6 +106,10 @@ Configured providers must have resolvable credentials, non-empty model names, va
 First-chunk and stream-idle timeouts default to 30 and 60 seconds respectively.
 These are application streaming policies: the Rig agent type does not enforce them, so consumers must apply `first_chunk_timeout()` and `stream_idle_timeout()` around stream polling.
 Other placeholders, including `${HOME}`, remain literal header text.
+
+## API
+
+See the [API reference on docs.rs](https://docs.rs/agents-config/latest/agents_config/) after the first crate publication.
 
 ## Development
 
