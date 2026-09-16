@@ -19,23 +19,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: totto2727-org/monorepo/.github/actions/setup-nix@main
-      - name: Check published version
-        id: version
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          metadata="$(cargo metadata --locked --no-deps --format-version 1)"
-          package="$(jq -er --arg manifest "$GITHUB_WORKSPACE/Cargo.toml" '.packages[] | select(.manifest_path == $manifest) | [.name, .version] | @tsv' <<< "$metadata")"
-          read -r name version <<< "$package"
-          status="$(curl --user-agent 'agents-config publishing (https://github.com/totto2727-org/agents-config)' --silent --show-error --retry 3 --output /dev/null --write-out '%{http_code}' "https://crates.io/api/v1/crates/$name/$version")"
-          case "$status" in
-            200) echo "$name $version is already published; skipping."; echo 'publish=false' >> "$GITHUB_OUTPUT" ;;
-            404) echo 'publish=true' >> "$GITHUB_OUTPUT" ;;
-            *) echo "crates.io version lookup failed: HTTP $status" >&2; exit 1 ;;
-          esac
-      - name: Publish crate
-        if: steps.version.outputs.publish == 'true'
+      - uses: ./.github/actions/publish-crate
+        with:
+          working-directory: .
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          eval "$(nix print-dev-env "$GITHUB_WORKSPACE#default")"
-          cargo publish --locked --registry crates-io

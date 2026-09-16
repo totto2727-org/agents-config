@@ -5,7 +5,12 @@
 It reads the package name and version using `cargo metadata` and checks the exact version on crates.io.
 HTTP 200 skips publication, HTTP 404 runs `cargo publish --locked --registry crates-io`, and other responses fail the job rather than assuming the version is unpublished.
 Registry lookup failures and Cargo publication failures are reported by the job.
-The version-check step writes its decision to `GITHUB_OUTPUT`; a separate publish step runs only for an unpublished version and receives the registry token.
+The local `.github/actions/publish-crate/action.yaml` composite action owns version lookup and publication.
+Like `publish-npm`, it accepts a required `working-directory` input, loads the caller workspace’s Nix environment, and inherits authentication from the caller’s environment.
+Its version-check step writes its decision to `GITHUB_OUTPUT`; a separate publish step runs only for an unpublished version.
+The calling workflow owns checkout, Nix installation, the main-push trigger, concurrency, and the `crates-io` environment.
+The action has no repository-specific crate name or path, allowing it to move to the shared monorepo later.
+Currently it targets crates.io only, not custom Cargo registries.
 
 ## Setup
 
